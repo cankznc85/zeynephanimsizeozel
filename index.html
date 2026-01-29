@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Zeynep için...</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600&display=swap');
+
+        :root {
+            --bg: #0b1c3d; 
+            --text: #ffffff;
+            --sub-text: #ced4da;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            overflow: hidden; 
+            font-family: 'Montserrat', sans-serif;
+            text-align: center;
+            transition: background 4s ease-in-out;
+        }
+
+        /* === MUM === */
+        #candleBox { transition: 0.8s; cursor: pointer; position: absolute; z-index: 10; }
+        #candle { 
+            width: 35px; height: 100px; 
+            background: linear-gradient(to bottom, #1e3799, #0b1c3d); 
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px; margin: auto; position: relative; 
+        }
+        #flame { 
+            width: 18px; height: 26px; 
+            background: radial-gradient(circle, #fff200, #f39c12); 
+            border-radius: 50% 50% 20% 20%; 
+            position: absolute; top: -30px; left: 8px; 
+            animation: flicker .1s infinite alternate; 
+            box-shadow: 0 0 20px #f39c12;
+        }
+        @keyframes flicker { 50% { transform: scale(1.1); opacity: 0.9; } }
+
+        /* === MESAJ ALANI === */
+        #main { 
+            display: none; 
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .message-step {
+            position: absolute;
+            width: 85%;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            pointer-events: none;
+            line-height: 1.8;
+        }
+
+        #quote { font-size: 18px; color: var(--sub-text); font-weight: 300; }
+        #finalText { 
+            font-size: 22px; 
+            font-weight: 600; 
+            color: white; 
+            min-height: 1.5em;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.7); 
+        }
+        #getWellSoon { font-size: 17px; color: white; font-weight: 300; }
+
+        /* === BUTON === */
+        #btnContainer {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            opacity: 0;
+            transition: 1.5s;
+            pointer-events: none;
+            z-index: 100;
+        }
+        #btnContainer.show { opacity: 1; pointer-events: auto; }
+        
+        button { 
+            background: rgba(255,255,255,0.08); 
+            border: 1px solid rgba(255,255,255,0.4); 
+            padding: 12px 28px; 
+            border-radius: 50px; 
+            color: white; 
+            font-size: 11px; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
+
+        .effect-item { position: absolute; pointer-events: none; animation: fly 4s linear forwards; z-index: 1; }
+        @keyframes fly { 
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="candleBox" onclick="startScene()">
+    <div id="candle"><div id="flame"></div></div>
+    <p style="margin-top:20px; font-size: 13px; opacity: 0.7; letter-spacing: 1px;">Muma üfle Zeynep ✨</p>
+</div>
+
+<div id="main">
+    <div id="quote" class="message-step">Bu mum senin tüm yorgunluğunu alıp götürsün...</div>
+    <div id="finalText" class="message-step"></div>
+    <div id="getWellSoon" class="message-step"></div>
+</div>
+
+<div id="btnContainer">
+    <button onclick="location.reload()">Tekrarla</button>
+</div>
+
+<audio id="music" src="music.mp3" preload="auto"></audio>
+
+<script>
+let blown = false;
+const music = document.getElementById("music");
+const quote = document.getElementById("quote");
+const finalText = document.getElementById("finalText");
+const gws = document.getElementById("getWellSoon");
+const btnBox = document.getElementById("btnContainer");
+
+// Ses Kontrolü
+if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices.getUserMedia({audio:true}).then(stream => {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        
+        function check() {
+            if (blown) return;
+            analyser.getByteFrequencyData(data);
+            let volume = data.reduce((a, b) => a + b) / data.length;
+            if (volume > 55) startScene(); 
+            requestAnimationFrame(check);
+        }
+        check();
+    }).catch(() => {});
+}
+
+function startScene() {
+    if(blown) return;
+    blown = true;
+    
+    document.getElementById("flame").style.display = "none";
+    document.getElementById("candleBox").style.opacity = "0";
+    document.body.style.background = "#240b36"; 
+
+    setTimeout(() => {
+        document.getElementById("candleBox").style.display = "none";
+        document.getElementById("main").style.display = "flex";
+        
+        // Şarkı 89. saniyede başlıyor
+        music.currentTime = 89;
+        music.volume = 0.3;
+        music.play().catch(() => {});
+
+        showSequence();
+    }, 1000);
+}
+
+function showSequence() {
+    // 1. Yazı
+    setTimeout(() => {
+        quote.style.opacity = "1";
+        setTimeout(() => {
+            quote.style.opacity = "0";
+            
+            // 2. Yazı (Daktilo Efekti)
+            setTimeout(() => {
+                finalText.style.opacity = "1";
+                typeWriter("Hep yanındayım, iyi ki varsın Zeynep... ❤️", () => {
+                    setTimeout(() => {
+                        finalText.style.opacity = "0";
+                        
+                        // 3. Yazı (Final)
+                        setTimeout(() => {
+                            gws.innerHTML = "Şu an hassas bir dönemden geçiyorsun...<br>Keşke acını seninle paylaşabilsem, yükünü alabilsem.<br>Unutma, her zaman yanındayım. ❤️🩹";
+                            gws.style.opacity = "1";
+                            
+                            setTimeout(() => { btnBox.classList.add("show"); }, 2000);
+                            finishEffects();
+                        }, 1200);
+                    }, 2500);
+                });
+            }, 1000);
+        }, 3200);
+    }, 500);
+}
+
+function typeWriter(txt, callback) {
+    let i = 0;
+    finalText.innerHTML = "";
+    const timer = setInterval(() => {
+        finalText.innerHTML += txt[i];
+        i++;
+        if (i === txt.length) {
+            clearInterval(timer);
+            if(callback) callback();
+        }
+    }, 100);
+}
+
+function finishEffects() {
+    let vol = 0.3;
+    const volInterval = setInterval(() => {
+        if (vol < 0.7) { vol += 0.05; music.volume = vol; }
+        else clearInterval(volInterval);
+    }, 400);
+
+    const emojis = ["❤️", "✨", "🌸", "☁️", "🩹"];
+    setInterval(() => {
+        const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+        const div = document.createElement("div");
+        div.className = "effect-item";
+        div.innerHTML = emoji;
+        div.style.left = Math.random() * 100 + "vw";
+        div.style.top = "100vh";
+        div.style.fontSize = (Math.random() * 20 + 15) + "px";
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), 4000);
+    }, 350);
+}
+</script>
+</body>
+</html>
