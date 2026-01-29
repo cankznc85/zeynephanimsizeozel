@@ -113,7 +113,7 @@
 
 <div id="candleBox" onclick="startScene()">
     <div id="candle"><div id="flame"></div></div>
-    <p style="margin-top:20px; font-size: 13px; opacity: 0.7; letter-spacing: 1px;">Muma üfle Zeynep ✨</p>
+    <p id="instruction" style="margin-top:20px; font-size: 13px; opacity: 0.7; letter-spacing: 1px;">Muma dokun Zeynep ✨</p>
 </div>
 
 <div id="main">
@@ -126,7 +126,7 @@
     <button onclick="location.reload()">Tekrarla</button>
 </div>
 
-<audio id="music" src="music.mp3" preload="auto"></audio>
+<audio id="music" src="music.mp3" preload="auto" playsinline></audio>
 
 <script>
 let blown = false;
@@ -136,31 +136,21 @@ const finalText = document.getElementById("finalText");
 const gws = document.getElementById("getWellSoon");
 const btnBox = document.getElementById("btnContainer");
 
-// Ses Kontrolü
-if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({audio:true}).then(stream => {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const source = audioContext.createMediaStreamSource(stream);
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 256;
-        source.connect(analyser);
-        const data = new Uint8Array(analyser.frequencyBinCount);
-        
-        function check() {
-            if (blown) return;
-            analyser.getByteFrequencyData(data);
-            let volume = data.reduce((a, b) => a + b) / data.length;
-            if (volume > 55) startScene(); 
-            requestAnimationFrame(check);
-        }
-        check();
-    }).catch(() => {});
-}
-
 function startScene() {
     if(blown) return;
     blown = true;
     
+    // Müzik Safari'de tıklama ile başladığı için artık çalışacak
+    music.currentTime = 89;
+    music.volume = 0.3;
+    let playPromise = music.play();
+
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.log("Müzik çalma hatası:", error);
+        });
+    }
+
     document.getElementById("flame").style.display = "none";
     document.getElementById("candleBox").style.opacity = "0";
     document.body.style.background = "#240b36"; 
@@ -168,31 +158,22 @@ function startScene() {
     setTimeout(() => {
         document.getElementById("candleBox").style.display = "none";
         document.getElementById("main").style.display = "flex";
-        
-        // Şarkı 89. saniyede başlıyor
-        music.currentTime = 89;
-        music.volume = 0.3;
-        music.play().catch(() => {});
-
         showSequence();
     }, 1000);
 }
 
 function showSequence() {
-    // 1. Yazı
     setTimeout(() => {
         quote.style.opacity = "1";
         setTimeout(() => {
             quote.style.opacity = "0";
             
-            // 2. Yazı (Daktilo Efekti)
             setTimeout(() => {
                 finalText.style.opacity = "1";
                 typeWriter("Hep yanındayım, iyi ki varsın Zeynep... ❤️", () => {
                     setTimeout(() => {
                         finalText.style.opacity = "0";
                         
-                        // 3. Yazı (Final)
                         setTimeout(() => {
                             gws.innerHTML = "Şu an hassas bir dönemden geçiyorsun...<br>Keşke acını seninle paylaşabilsem, yükünü alabilsem.<br>Unutma, her zaman yanındayım. ❤️🩹";
                             gws.style.opacity = "1";
